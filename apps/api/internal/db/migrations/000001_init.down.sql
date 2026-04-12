@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS cards;
+DROP TABLE IF EXISTS columns;
+DROP TABLE IF EXISTS boards;
+
+DROP FUNCTION IF EXISTS set_updated_at;
+
+REVOKE ALL PRIVILEGES ON DATABASE agent_kanban FROM kanban_user;
+DROP USER IF EXISTS kanban_user;
