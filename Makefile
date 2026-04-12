@@ -1,3 +1,6 @@
+include .env
+export
+
 infra-up:
 	docker compose -f infra/docker/compose.infra.yml up -d
 
@@ -15,12 +18,12 @@ web:
 
 migrate-up:
 	migrate -path apps/api/internal/db/migrations \
-	-database "postgres://kanban:kanban@localhost:5432/agentkanban?sslmode=disable" \
+	-database "$(DATABASE_URL)" \
 	up
 
 migrate-down:
 	migrate -path apps/api/internal/db/migrations \
-	-database "postgres://kanban:kanban@localhost:5432/agentkanban?sslmode=disable" \
+	-database "$(DATABASE_URL)" \
 	down 1
 
 migrate-create:
