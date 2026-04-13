@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -48,6 +49,33 @@ func (h *ColumnHandler) GetColumns(w http.ResponseWriter, r *http.Request) {
 	writeJsonResponse(w, http.StatusOK, columns)
 }
 
+func (h *ColumnHandler) GetColumnByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Missing column ID", http.StatusBadRequest)
+		return
+	}
+
+	var column domain.Column
+	err := h.DB.QueryRow(r.Context(),
+		"SELECT id, board_id, name, position, created_at, updated_at FROM columns WHERE id = $1",
+		id,
+	).Scan(
+		&column.Id,
+		&column.BoardId,
+		&column.Name,
+		&column.Position,
+		&column.CreatedAt,
+		&column.UpdatedAt,
+	)
+	if err != nil {
+		http.Error(w, "Column not found", http.StatusNotFound)
+		return
+	}
+
+	writeJsonResponse(w, http.StatusOK, column)
+}
+
 func (h *ColumnHandler) CreateColumn(w http.ResponseWriter, r *http.Request) {
 	type createColumnRequest struct {
 		BoardID  string `json:"board_id"`
@@ -76,4 +104,65 @@ func (h *ColumnHandler) CreateColumn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJsonResponse(w, http.StatusCreated, map[string]string{"id": columnId})
+}
+
+func (h *ColumnHandler) UpdateColumn(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Missing column ID", http.StatusBadRequest)
+		return
+	}
+
+	type updateColumnRequest struct {
+		Name     string `json:"name"`
+		Position int    `json:"position"`
+	}
+
+	var req updateColumnRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	commandTag, err := h.DB.Exec(r.Context(),
+		"UPDATE columns SET name = $1, position = $2, updated_at = NOW() WHERE id = $3",
+		req.Name,
+		req.Position,
+		id,
+	)
+	if err != nil {
+		http.Error(w, "Failed to update column", http.StatusInternalServerError)
+		return
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		http.Error(w, "Column not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ColumnHandler) DeleteColumn(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Missing column ID", http.StatusBadRequest)
+		return
+	}
+
+	commandTag, err := h.DB.Exec(r.Context(),
+		"DELETE FROM columns WHERE id = $1",
+		id,
+	)
+	if err != nil {
+		http.Error(w, "Failed to delete column", http.StatusInternalServerError)
+		return
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		http.Error(w, "Column not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
