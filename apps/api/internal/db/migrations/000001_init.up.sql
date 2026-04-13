@@ -1,13 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'kanban_user') THEN
-    CREATE USER kanban_user WITH PASSWORD 'kanban_password';
-  END IF;
-END $$;
-
-GRANT ALL PRIVILEGES ON DATABASE agent_kanban TO kanban_user;
-
 CREATE TABLE boards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
