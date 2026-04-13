@@ -3,9 +3,11 @@ package handlers
 import (
 	"agent-kanban-api/internal/domain"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -68,8 +70,12 @@ func (h *ColumnHandler) GetColumnByID(w http.ResponseWriter, r *http.Request) {
 		&column.CreatedAt,
 		&column.UpdatedAt,
 	)
-	if err != nil {
+	if errors.Is(err, pgx.ErrNoRows) {
 		http.Error(w, "Column not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, "Failed to fetch column", http.StatusInternalServerError)
 		return
 	}
 

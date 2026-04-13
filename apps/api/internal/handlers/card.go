@@ -3,10 +3,12 @@ package handlers
 import (
 	"agent-kanban-api/internal/domain"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -80,8 +82,12 @@ func (h *CardHandler) GetCardByID(w http.ResponseWriter, r *http.Request) {
 		&card.CreatedAt,
 		&card.UpdatedAt,
 	)
-	if err != nil {
+	if errors.Is(err, pgx.ErrNoRows) {
 		http.Error(w, "Card not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, "Failed to fetch card", http.StatusInternalServerError)
 		return
 	}
 

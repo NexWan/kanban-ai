@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"agent-kanban-api/internal/domain"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -140,8 +142,12 @@ func (h *BoardHandler) GetBoardByID(w http.ResponseWriter, r *http.Request) {
 		"SELECT id, name, description FROM boards WHERE id = $1",
 		id,
 	).Scan(&b.ID, &b.Name, &b.Description)
-	if err != nil {
+	if errors.Is(err, pgx.ErrNoRows) {
 		http.Error(w, "Board not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, "Failed to fetch board", http.StatusInternalServerError)
 		return
 	}
 
