@@ -47,6 +47,10 @@ func (h *ColumnHandler) GetColumns(w http.ResponseWriter, r *http.Request) {
 
 		columns = append(columns, column)
 	}
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Failed to read columns", http.StatusInternalServerError)
+		return
+	}
 
 	writeJsonResponse(w, http.StatusOK, columns)
 }

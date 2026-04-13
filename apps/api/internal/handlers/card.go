@@ -52,6 +52,10 @@ func (h *CardHandler) GetCards(w http.ResponseWriter, r *http.Request) {
 
 		cards = append(cards, card)
 	}
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Failed to read cards", http.StatusInternalServerError)
+		return
+	}
 
 	writeJsonResponse(w, http.StatusOK, cards)
 }

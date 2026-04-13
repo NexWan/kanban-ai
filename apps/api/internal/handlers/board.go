@@ -68,6 +68,10 @@ func (h *BoardHandler) GetBoards(w http.ResponseWriter, r *http.Request) {
 		boardOrder = append(boardOrder, b.ID)
 	}
 	boardRows.Close()
+	if err := boardRows.Err(); err != nil {
+		http.Error(w, "Failed to read boards", http.StatusInternalServerError)
+		return
+	}
 
 	// 2. Fetch all columns
 	colRows, err := h.DB.Query(ctx, "SELECT id, board_id, name, position FROM columns ORDER BY board_id, position")
@@ -91,6 +95,10 @@ func (h *BoardHandler) GetBoards(w http.ResponseWriter, r *http.Request) {
 		colOrder[boardID] = append(colOrder[boardID], col.ID)
 	}
 	colRows.Close()
+	if err := colRows.Err(); err != nil {
+		http.Error(w, "Failed to read columns", http.StatusInternalServerError)
+		return
+	}
 
 	// 3. Fetch all cards
 	cardRows, err := h.DB.Query(ctx, "SELECT id, column_id, parent_card_id, title, description, priority, status, position FROM cards ORDER BY column_id, position")
@@ -112,6 +120,10 @@ func (h *BoardHandler) GetBoards(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	cardRows.Close()
+	if err := cardRows.Err(); err != nil {
+		http.Error(w, "Failed to read cards", http.StatusInternalServerError)
+		return
+	}
 
 	// 4. Assemble final response in original board order
 	boards := make([]boardResponse, 0, len(boardOrder))
@@ -175,6 +187,10 @@ func (h *BoardHandler) GetBoardByID(w http.ResponseWriter, r *http.Request) {
 		colOrder = append(colOrder, col.ID)
 	}
 	colRows.Close()
+	if err := colRows.Err(); err != nil {
+		http.Error(w, "Failed to read columns", http.StatusInternalServerError)
+		return
+	}
 
 	// 3. Fetch cards for this board
 	cardRows, err := h.DB.Query(ctx,
@@ -199,6 +215,10 @@ func (h *BoardHandler) GetBoardByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	cardRows.Close()
+	if err := cardRows.Err(); err != nil {
+		http.Error(w, "Failed to read cards", http.StatusInternalServerError)
+		return
+	}
 
 	// 4. Assemble columns in order
 	b.Columns = make([]columnResponse, 0, len(colOrder))
