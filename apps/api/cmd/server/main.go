@@ -30,7 +30,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	addr := ":8080"
+	addr := ":" + cfg.Port
 	router := app.NewRouter(pool)
 
 	log.Printf("Starting server on %s", addr)
