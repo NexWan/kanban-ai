@@ -21,7 +21,7 @@ func NewCardHandler(db *pgxpool.Pool) *CardHandler {
 }
 
 func (h *CardHandler) GetCards(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.DB.Query(r.Context(), "SELECT id, board_id, column_id, title, description, status, priority, position, created_at, updated_at FROM cards")
+	rows, err := h.DB.Query(r.Context(), "SELECT id, board_id, column_id, parent_card_id, title, description, status, priority, position, assigned_user_id, agent_owner_id, created_at, updated_at FROM cards")
 	if err != nil {
 		http.Error(w, "Failed to query cards", http.StatusInternalServerError)
 		return
@@ -37,11 +37,14 @@ func (h *CardHandler) GetCards(w http.ResponseWriter, r *http.Request) {
 			&card.Id,
 			&card.BoardId,
 			&card.ColumnId,
+			&card.ParentCardId,
 			&card.Title,
 			&card.Description,
 			&card.Status,
 			&card.Priority,
 			&card.Position,
+			&card.AssignedUserId,
+			&card.AgentOwnerId,
 			&card.CreatedAt,
 			&card.UpdatedAt,
 		)
